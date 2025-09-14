@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { apiService } from '../services/api';
-import type { ChatOut, ApiState } from '../types/api';
+import type { ApiState } from '../types/api';
 
 export const useChatApi = () => {
   const [apiState, setApiState] = useState<ApiState>({

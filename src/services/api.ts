@@ -1,6 +1,6 @@
 import axios, { type AxiosResponse } from 'axios';
 import type { AxiosInstance } from 'axios';
-import type { ChatIn, ChatOut, HealthResponse } from '../types/api';
+import type { ChatIn, ChatOut, HealthResponse, AudioOut } from '../types/api';
 
 // Базовый URL для API
 const API_BASE_URL = 'http://localhost:8000';
@@ -59,6 +59,31 @@ export const apiService = {
     };
 
     const response: AxiosResponse<ChatOut> = await apiClient.post('/chat', requestData);
+    return response.data;
+  },
+
+  /**
+   * Отправка аудио файла для транскрипции и обработки
+   * @param audioFile - WAV файл в бинарном формате
+   * @param system_prompt_ru - системный промпт (по умолчанию пустая строка)
+   */
+  async sendAudioFile(
+    audioFile: File,
+    system_prompt_ru: string = ''
+  ): Promise<AudioOut> {
+    const formData = new FormData();
+    formData.append('audio', audioFile);
+    
+    if (system_prompt_ru) {
+      formData.append('system_prompt_ru', system_prompt_ru);
+    }
+
+    const response: AxiosResponse<AudioOut> = await apiClient.post('/audio', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
     return response.data;
   },
 };

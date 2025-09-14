@@ -40,3 +40,17 @@ export interface ApiResponse<T> {
   status: number;
   statusText: string;
 }
+
+// Типы для аудио API
+export interface AudioOut {
+  transcription: string;
+  translated_to_ru: string;
+  model_answer_ru: string;
+  translated_back_to_tat: string;
+}
+
+export interface AudioApiState {
+  isLoading: boolean;
+  error: string | null;
+  data: AudioOut | null;
+}
