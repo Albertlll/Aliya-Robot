@@ -1,15 +1,19 @@
 // Типы для API запросов и ответов
 
+export type ScenarioType = 'studying' | 'dialog';
+
 export interface ChatIn {
   message_tat: string;
-  system_prompt_ru?: string;
+  scenario?: ScenarioType | null; // default: 'dialog'
+  system_prompt_ru?: string | null;
 }
 
 export interface ChatOut {
-  input_tat: string;
+  input_tat?: string | null;
   translated_to_ru: string;
   model_answer_ru: string;
-  translated_back_to_tat: string;
+  audio_base64: string; // base64 WAV
+  recognized_tat?: string | null;
 }
 
 export interface ValidationError {
@@ -39,18 +43,4 @@ export interface ApiResponse<T> {
   data: T;
   status: number;
   statusText: string;
-}
-
-// Типы для аудио API
-export interface AudioOut {
-  transcription: string;
-  translated_to_ru: string;
-  model_answer_ru: string;
-  translated_back_to_tat: string;
-}
-
-export interface AudioApiState {
-  isLoading: boolean;
-  error: string | null;
-  data: AudioOut | null;
 }

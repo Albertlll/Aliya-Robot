@@ -1,10 +1,10 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { useAudioApi } from '../hooks/useAudioApi';
-import type { AudioOut } from '../types/api';
+import { apiService } from '../services/api';
+import type { ChatOut } from '../types/api';
 import './AudioUpload.scss';
 
 interface AudioUploadProps {
-  onAudioProcessed?: (result: AudioOut) => void;
+  onAudioProcessed?: (result: ChatOut) => void;
   className?: string;
 }
 
@@ -16,10 +16,13 @@ const AudioUpload: React.FC<AudioUploadProps> = ({
   onAudioProcessed, 
   className = '' 
 }) => {
-  const { isLoading, error, data, sendAudioFile, clearError } = useAudioApi();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<ChatOut | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [systemPrompt, setSystemPrompt] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   /**
    * Обработка выбора файла
@@ -43,7 +46,7 @@ const AudioUpload: React.FC<AudioUploadProps> = ({
     }
 
     setSelectedFile(file);
-    clearError();
+    setError(null);
   }, [clearError]);
 
   /**
@@ -58,11 +61,28 @@ const AudioUpload: React.FC<AudioUploadProps> = ({
     }
 
     try {
-      await sendAudioFile(selectedFile, systemPrompt);
-    } catch (error) {
-      console.error('Ошибка при отправке аудио:', error);
+      setIsLoading(true);
+      setError(null);
+      const resp = await apiService.sendChatAudio(selectedFile, { system_prompt_ru: systemPrompt });
+      setData(resp);
+      const base64 = resp.audio_base64;
+      if (base64) {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.src = '';
+          audioRef.current = null;
+        }
+        const audio = new Audio(`data:audio/wav;base64,${base64}`);
+        audioRef.current = audio;
+        await audio.play();
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Неизвестная ошибка при отправке аудио';
+      setError(msg);
+    } finally {
+      setIsLoading(false);
     }
-  }, [selectedFile, systemPrompt, sendAudioFile]);
+  }, [selectedFile, systemPrompt]);
 
   /**
    * Обработка успешной обработки аудио
@@ -79,7 +99,7 @@ const AudioUpload: React.FC<AudioUploadProps> = ({
   const handleClear = useCallback(() => {
     setSelectedFile(null);
     setSystemPrompt('');
-    clearError();
+    setError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }

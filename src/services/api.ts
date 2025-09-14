@@ -1,9 +1,9 @@
 import axios, { type AxiosResponse } from 'axios';
 import type { AxiosInstance } from 'axios';
-import type { ChatIn, ChatOut, HealthResponse, AudioOut } from '../types/api';
+import type { ChatIn, ChatOut, HealthResponse, ScenarioType } from '../types/api';
 
-// Базовый URL для API
-const API_BASE_URL = 'http://localhost:8000';
+// Базовый URL для API (используем прокси Vite)
+const API_BASE_URL = '/api';
 
 // Создаем экземпляр axios с базовой конфигурацией
 const apiClient: AxiosInstance = axios.create({
@@ -63,28 +63,29 @@ export const apiService = {
   },
 
   /**
-   * Отправка аудио файла для транскрипции и обработки
-   * @param audioFile - WAV файл в бинарном формате
-   * @param system_prompt_ru - системный промпт (по умолчанию пустая строка)
+   * Отправить WAV в /chat-audio и получить ChatOut
    */
-  async sendAudioFile(
-    audioFile: File,
-    system_prompt_ru: string = ''
-  ): Promise<AudioOut> {
+  async sendChatAudio(
+    file: Blob,
+    options?: { scenario?: ScenarioType | null; system_prompt_ru?: string | null }
+  ): Promise<ChatOut> {
     const formData = new FormData();
-    formData.append('audio', audioFile);
-    
-    if (system_prompt_ru) {
-      formData.append('system_prompt_ru', system_prompt_ru);
-    }
+    formData.append('file', file, 'audio.wav');
 
-    const response: AxiosResponse<AudioOut> = await apiClient.post('/audio', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    const params: Record<string, string> = {};
+    if (options?.scenario) params.scenario = options.scenario;
+    if (options?.system_prompt_ru) params.system_prompt_ru = options.system_prompt_ru;
+
+    const response: AxiosResponse<ChatOut> = await apiClient.post('/chat-audio', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      params,
     });
-    
     return response.data;
+  },
+
+  /** Очистить историю */
+  async clearHistory(): Promise<void> {
+    await apiClient.post('/clear-history');
   },
 };
 
