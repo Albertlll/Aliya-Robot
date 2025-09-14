@@ -74,7 +74,10 @@ const AudioUpload: React.FC<AudioUploadProps> = ({
         }
         const audio = new Audio(`data:audio/wav;base64,${base64}`);
         audioRef.current = audio;
-        await audio.play();
+        audio.play().catch((error) => {
+          console.warn('Автовоспроизведение заблокировано браузером:', error.name);
+          // Можно добавить уведомление пользователю
+        });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Неизвестная ошибка при отправке аудио';
